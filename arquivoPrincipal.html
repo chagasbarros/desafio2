@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel de Ferramentas</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #121a35;
+      --accent: #4ade80;
+      --accent-dark: #22c55e;
+      --text: #e7ebf5;
+      --muted: #a7b5dc;
+    }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      background: var(--card);
+      padding: 40px 30px;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+      max-width: 400px;
+      width: 100%;
+    }
+    h1 {
+      margin-bottom: 24px;
+      color: var(--accent);
+    }
+    button {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      margin: 12px 0;
+      font-size: 1rem;
+      font-weight: bold;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+    }
+    button:hover {
+      background: var(--accent-dark);
+      transform: translateY(-2px);
+    }
+    .muted {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Painel de Ferramentas</h1>
+
+    <button onclick="window.location.href='index.html'">
+      Validador de Carteiras & Ordenador de Transações
+    </button>
+
+    <button onclick="window.location.href='desafio2.html'">
+      Calculadora de Juros Compostos
+    </button>
+
+    <button onclick="window.location.href='desafio3.html'">
+      Verificador de Força de Senha
+    </button>
+
+    <p class="muted">Clique em qualquer botão para abrir a ferramenta correspondente.</p>
+  </div>
+
+</body>
+</html>
