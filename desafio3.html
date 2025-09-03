@@ -5,37 +5,108 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Verificador de Força de Senha</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #0b1020; color: #e7ebf5; padding: 30px; }
-    h1 { font-size: 1.3rem; }
+    :root {
+      --bg: #0b1020;
+      --card: #121a35;
+      --accent: #4ade80;
+      --text: #e7ebf5;
+      --muted: #a7b5dc;
+      --border: #1e2a52;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+    .container {
+      background: var(--card);
+      padding: 28px;
+      border-radius: 16px;
+      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.5);
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+    h1 {
+      font-size: 1.4rem;
+      margin-bottom: 20px;
+      color: var(--accent);
+    }
     input {
-      width: 100%; padding: 12px; margin-top: 10px; font-size: 1rem;
-      border-radius: 10px; border: 1px solid #1e2a52; background: #121a35; color: #fff;
+      width: 100%;
+      padding: 12px;
+      margin-top: 12px;
+      font-size: 1rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #091334;
+      color: #fff;
+      transition: border 0.3s;
+    }
+    input:focus {
+      border-color: var(--accent);
+      outline: none;
     }
     .strength-bar {
-      height: 12px; border-radius: 8px; margin: 10px 0; background: #222;
+      height: 14px;
+      border-radius: 10px;
+      margin: 16px 0;
+      background: #222;
       overflow: hidden;
     }
     .strength-bar div {
-      height: 100%; transition: width 0.3s;
+      height: 100%;
+      width: 0%;
+      transition: width 0.4s ease, background 0.4s ease;
     }
-    .criteria { margin: 10px 0; font-size: 0.9rem; }
-    .criteria span { display: block; margin: 3px 0; }
-    .ok { color: #4ade80; }
-    .err { color: #f87171; }
+    #feedback {
+      font-weight: bold;
+      margin-bottom: 10px;
+      font-size: 1rem;
+    }
+    .criteria {
+      margin-top: 16px;
+      font-size: 0.9rem;
+      text-align: left;
+    }
+    .criteria span {
+      display: block;
+      margin: 5px 0;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      transition: background 0.3s, color 0.3s;
+    }
+    .ok {
+      color: var(--accent);
+      background: rgba(74, 222, 128, 0.1);
+    }
+    .err {
+      color: #f87171;
+      background: rgba(248, 113, 113, 0.1);
+    }
   </style>
 </head>
 <body>
-  <h1>Verificador de Força de Senha</h1>
+  <div class="container">
+    <h1>Verificador de Força de Senha</h1>
 
-  <input type="password" id="senha" placeholder="Digite sua senha..." />
-  <div class="strength-bar"><div id="bar"></div></div>
-  <p id="feedback"></p>
+    <input type="password" id="senha" placeholder="Digite sua senha..." />
+    <div class="strength-bar"><div id="bar"></div></div>
+    <p id="feedback"></p>
 
-  <div class="criteria">
-    <span id="minChars">❌ Mínimo de 8 caracteres</span>
-    <span id="upperLower">❌ Maiúsculas e minúsculas</span>
-    <span id="numbers">❌ Números</span>
-    <span id="symbols">❌ Símbolos especiais</span>
+    <div class="criteria">
+      <span id="minChars">❌ Mínimo de 8 caracteres</span>
+      <span id="upperLower">❌ Maiúsculas e minúsculas</span>
+      <span id="numbers">❌ Números</span>
+      <span id="symbols">❌ Símbolos especiais</span>
+    </div>
   </div>
 
   <script>
@@ -52,14 +123,12 @@
       const senha = senhaEl.value;
       let score = 0;
 
-      // Critérios
       const hasMinChars = senha.length >= 8;
       const hasUpper = /[A-Z]/.test(senha);
       const hasLower = /[a-z]/.test(senha);
       const hasNumbers = /[0-9]/.test(senha);
       const hasSymbols = /[^A-Za-z0-9]/.test(senha);
 
-      // Atualizar critérios na tela
       minCharsEl.textContent = (hasMinChars ? "✅" : "❌") + " Mínimo de 8 caracteres";
       minCharsEl.className = hasMinChars ? "ok" : "err";
 
@@ -72,13 +141,11 @@
       symbolsEl.textContent = (hasSymbols ? "✅" : "❌") + " Símbolos especiais";
       symbolsEl.className = hasSymbols ? "ok" : "err";
 
-      // Somar pontos
       if (hasMinChars) score++;
       if (hasUpper && hasLower) score++;
       if (hasNumbers) score++;
       if (hasSymbols) score++;
 
-      // Barra de força
       let strength = "";
       let width = "0%";
       let color = "red";

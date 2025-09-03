@@ -1,29 +1,121 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora de Juros Compostos</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #121a35;
+      --accent: #4ade80;
+      --accent-dark: #22c55e;
+      --text: #e7ebf5;
+      --muted: #a7b5dc;
+      --border: #1e2a52;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+    .container {
+      background: var(--card);
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+    h1 {
+      font-size: 1.4rem;
+      margin-bottom: 20px;
+      color: var(--accent);
+    }
+    label {
+      display: block;
+      text-align: left;
+      margin: 12px 0 6px;
+      font-weight: 600;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #091334;
+      color: var(--text);
+      font-size: 1rem;
+      transition: border 0.3s;
+    }
+    input:focus {
+      border-color: var(--accent);
+      outline: none;
+    }
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      font-weight: bold;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: var(--accent-dark);
+    }
+    p {
+      margin-top: 20px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--accent);
+    }
+  </style>
 </head>
 <body>
-    <div>    Desafio de lógica de programação
-</div>
-<label>Valor do Investimento: R$</label>
-<input type="number" id="valorInvestimento"><br>
+  <div class="container">
+    <h1>Calculadora de Juros Compostos</h1>
 
-<label>Tempo (em meses):</label>
-<input type="number" id="tempoMeses"><br>
+    <label for="valorInvestimento">Valor do Investimento (R$)</label>
+    <input type="number" id="valorInvestimento" placeholder="Ex: 1000">
 
-<label>Taxa de Juros Mensal (%):</label>
-<input type="number" id="taxaJuros"><br>
+    <label for="tempoMeses">Tempo (em meses)</label>
+    <input type="number" id="tempoMeses" placeholder="Ex: 12">
 
-<button onclick="calcularJuros()">Calcular</button>
+    <label for="taxaJuros">Taxa de Juros Mensal (%)</label>
+    <input type="number" id="taxaJuros" placeholder="Ex: 2">
 
-<p id="valorFinal"></p>
+    <button onclick="calcularJuros()">Calcular</button>
 
-    
+    <p id="valorFinal"></p>
+  </div>
 
-    <script src="script.js"></script>
+  <script>
+    function calcularJuros() {
+      const valor = parseFloat(document.getElementById("valorInvestimento").value);
+      const meses = parseInt(document.getElementById("tempoMeses").value);
+      const taxa = parseFloat(document.getElementById("taxaJuros").value) / 100;
+
+      if (isNaN(valor) || isNaN(meses) || isNaN(taxa)) {
+        document.getElementById("valorFinal").textContent = "Preencha todos os campos!";
+        return;
+      }
+
+      const montante = valor * Math.pow(1 + taxa, meses);
+      document.getElementById("valorFinal").textContent =
+        "Valor Final: R$ " + montante.toFixed(2);
+    }
+  </script>
 </body>
-    
 </html>

@@ -1,12 +1,128 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Validador & Ordenador de Transações</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #121a35;
+      --accent: #4ade80;
+      --accent-dark: #22c55e;
+      --text: #e7ebf5;
+      --muted: #a7b5dc;
+      --err: #f87171;
+      --ok: #4ade80;
+      --border: #1e2a52;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 20px;
+      line-height: 1.5;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 24px;
+      font-size: 1.6rem;
+      color: var(--accent);
+    }
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 20px;
+      margin: 16px auto;
+      max-width: 800px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    label {
+      font-weight: 600;
+      margin-bottom: 6px;
+      display: block;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #091334;
+      color: var(--text);
+      font-size: 1rem;
+      margin-bottom: 12px;
+      transition: border 0.3s;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+      outline: none;
+    }
+    button {
+      padding: 10px 16px;
+      margin-right: 10px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      background: var(--accent);
+      color: #fff;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: var(--accent-dark);
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+    .row-2 > div {
+      flex: 1;
+      min-width: 200px;
+    }
+    .muted {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+    .ok { color: var(--ok); font-weight: bold; }
+    .err { color: var(--err); font-weight: bold; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background: #1a2448;
+      font-weight: 600;
+    }
+    code {
+      background: #1c274a;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+    .pill {
+      background: #1c274a;
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 0.8rem;
+    }
+    textarea {
+      min-height: 150px;
+      font-family: monospace;
+    }
+  </style>
 </head>
 <body>
-    <h1>Validador de Carteiras & Ordenador de Transações</h1>
+  <h1>Validador de Carteiras & Ordenador de Transações</h1>
 
   <!-- Validador -->
   <div class="card">
@@ -29,8 +145,9 @@
     <div class="row" style="margin-top: 12px;">
       <button id="btnValidate">Validar endereço</button>
       <div id="result" class="muted"></div>
-      <div class="muted">Obs.: a validação abaixo verifica o <b>formato</b> do endereço (regex). Para validação com checksum (p.ex. EIP-55 no Ethereum), use bibliotecas específicas na sua stack.</div>
     </div>
+    <div class="muted">Obs.: a validação abaixo verifica apenas o <b>formato</b> do endereço (regex).  
+      Para validação com checksum (p.ex. EIP-55 no Ethereum), use bibliotecas específicas na sua stack.</div>
   </div>
 
   <!-- Ordenador -->
@@ -49,27 +166,26 @@
     </div>
 
     <div id="tableWrap"></div>
-    <div class="muted" style="margin-top:8px;">Dica: a chave do valor pode ser <span class="pill">valor</span>, <span class="pill">value</span> ou <span class="pill">amount</span>. Suporta números no formato “1234.56” ou “1.234,56”.</div>
+    <div class="muted">Dica: a chave do valor pode ser 
+      <span class="pill">valor</span>, 
+      <span class="pill">value</span> ou 
+      <span class="pill">amount</span>.  
+      Suporta números no formato “1234.56” ou “1.234,56”.</div>
   </div>
 
+  <!-- Script original permanece igual -->
   <script>
     // ---------- 1) Validação de endereços ----------
-    // Regex de formato (sem checksum) para redes comuns.
     const validators = {
-      // 0x + 40 hex
       eth: addr => /^0x[a-fA-F0-9]{40}$/.test(addr.trim()),
-      // BTC legado (Base58) e bech32 (bc1...)
       btc: addr => {
         const a = addr.trim();
         const base58 = /^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/.test(a);
         const bech32 = /^(bc1)[ac-hj-np-z0-9]{25,39}$/i.test(a);
         return base58 || bech32;
       },
-      // Solana: Base58 (sem 0, O, I, l), entre 32 e 44 chars
       sol: addr => /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(addr.trim()),
-      // TRON: começa com T + Base58, 34 chars no total
       trx: addr => /^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(addr.trim()),
-      // XRP: começa com r + Base58, 25–35
       xrp: addr => /^r[1-9A-HJ-NP-Za-km-z]{25,34}$/.test(addr.trim()),
     };
 
@@ -78,7 +194,6 @@
       return typeof fn === 'function' ? fn(address) : false;
     }
 
-    // UI de validação
     const networkEl = document.getElementById('network');
     const addressEl = document.getElementById('address');
     const resultEl  = document.getElementById('result');
@@ -91,46 +206,34 @@
         : `<span class="err">✗ Endereço inválido para a rede selecionada.</span>`;
     });
 
-    // ---------- 2) Ordenação de transações ----------
-    // Conversor de string numérica (suporta "1234.56" e "1.234,56")
+    // ---------- 2) Ordenação ----------
     function toNumberBR(x) {
       if (typeof x === 'number') return x;
       if (typeof x !== 'string') return NaN;
       const s = x.trim();
-      // Se tem vírgula e ponto, assume formato BR "1.234,56"
       if (s.includes(',') && s.includes('.')) {
-        // remove separador de milhar "." e troca vírgula por ponto
         return Number(s.replace(/\./g, '').replace(',', '.'));
       }
-      // Se tem só vírgula, troca por ponto
       if (s.includes(',') && !s.includes('.')) {
         return Number(s.replace(',', '.'));
       }
-      // Caso padrão (já com ponto decimal)
       return Number(s);
     }
-
-    // Pega o valor de uma tx nas chaves comuns
     function getTxValue(tx) {
       if (tx == null || typeof tx !== 'object') return NaN;
       const raw = tx.valor ?? tx.value ?? tx.amount;
       return toNumberBR(raw);
     }
-
-    // Ordena desc pelo valor
     function sortTransactionsDesc(txs) {
       return [...txs].sort((a, b) => {
         const va = getTxValue(a);
         const vb = getTxValue(b);
-        // NaN vai para o fim
         if (isNaN(va) && isNaN(vb)) return 0;
         if (isNaN(va)) return 1;
         if (isNaN(vb)) return -1;
         return vb - va;
       });
     }
-
-    // Tabela
     function renderTable(txs) {
       const wrap = document.getElementById('tableWrap');
       if (!txs?.length) {
@@ -162,8 +265,6 @@
         </table>
       `;
     }
-
-    // UI de ordenação
     const txArea = document.getElementById('txjson');
     document.getElementById('btnSort').addEventListener('click', () => {
       try {
@@ -175,12 +276,9 @@
         alert('JSON inválido: ' + e.message);
       }
     });
-
     document.getElementById('btnClear').addEventListener('click', () => {
       document.getElementById('tableWrap').innerHTML = '';
     });
-
-    // Render inicial (com exemplo)
     (function init() {
       try {
         const example = JSON.parse(txArea.value);
