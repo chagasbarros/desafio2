@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Validador de Carteiras & Ordenador de Transações</h1>
+
+  <!-- Validador -->
+  <div class="card">
+    <div class="row row-2">
+      <div>
+        <label for="network">Rede</label>
+        <select id="network">
+          <option value="eth">Ethereum / BNB / Polygon</option>
+          <option value="btc">Bitcoin</option>
+          <option value="sol">Solana</option>
+          <option value="trx">TRON</option>
+          <option value="xrp">XRP (Ripple)</option>
+        </select>
+      </div>
+      <div>
+        <label for="address">Endereço da carteira</label>
+        <input id="address" placeholder="Cole o endereço aqui…" />
+      </div>
+    </div>
+    <div class="row" style="margin-top: 12px;">
+      <button id="btnValidate">Validar endereço</button>
+      <div id="result" class="muted"></div>
+      <div class="muted">Obs.: a validação abaixo verifica o <b>formato</b> do endereço (regex). Para validação com checksum (p.ex. EIP-55 no Ethereum), use bibliotecas específicas na sua stack.</div>
+    </div>
+  </div>
+
+  <!-- Ordenador -->
+  <div class="card">
+    <label for="txjson">Transações (JSON)</label>
+    <textarea id="txjson" spellcheck="false">[
+  { "id": "tx001", "from": "0xAAA...", "to": "0xBBB...", "valor": 1234.56 },
+  { "id": "tx002", "from": "bc1q...", "to": "bc1z...", "amount": "9.87" },
+  { "id": "tx003", "from": "TAbc...", "to": "Tabc...", "value": "15,30" },
+  { "id": "tx004", "from": "rXYZ...", "to": "r123...", "valor": "10000" }
+]</textarea>
+
+    <div class="row row-2">
+      <button id="btnSort">Ordenar por valor (maior → menor)</button>
+      <button id="btnClear">Limpar tabela</button>
+    </div>
+
+    <div id="tableWrap"></div>
+    <div class="muted" style="margin-top:8px;">Dica: a chave do valor pode ser <span class="pill">valor</span>, <span class="pill">value</span> ou <span class="pill">amount</span>. Suporta números no formato “1234.56” ou “1.234,56”.</div>
+  </div>
+
+  <script>
+    // ---------- 1) Validação de endereços ----------
+    // Regex de formato (sem checksum) para redes comuns.
+    const validators = {
+      // 0x + 40 hex
+      eth: addr => /^0x[a-fA-F0-9]{40}$/.test(addr.trim()),
+      // BTC legado (Base58) e bech32 (bc1...)
+      btc: addr => {
+        const a = addr.trim();
+        const base58 = /^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/.test(a);
+        const bech32 = /^(bc1)[ac-hj-np-z0-9]{25,39}$/i.test(a);
+        return base58 || bech32;
+      },
+      // Solana: Base58 (sem 0, O, I, l), entre 32 e 44 chars
+      sol: addr => /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(addr.trim()),
+      // TRON: começa com T + Base58, 34 chars no total
+      trx: addr => /^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(addr.trim()),
+      // XRP: começa com r + Base58, 25–35
+      xrp: addr => /^r[1-9A-HJ-NP-Za-km-z]{25,34}$/.test(addr.trim()),
+    };
+
+    function validateAddress(network, address) {
+      const fn = validators[network];
+      return typeof fn === 'function' ? fn(address) : false;
+    }
+
+    // UI de validação
+    const networkEl = document.getElementById('network');
+    const addressEl = document.getElementById('address');
+    const resultEl  = document.getElementById('result');
+    document.getElementById('btnValidate').addEventListener('click', () => {
+      const net = networkEl.value;
+      const addr = addressEl.value;
+      const ok = validateAddress(net, addr);
+      resultEl.innerHTML = ok
+        ? `<span class="ok">✓ Endereço válido para a rede selecionada.</span>`
+        : `<span class="err">✗ Endereço inválido para a rede selecionada.</span>`;
+    });
+
+    // ---------- 2) Ordenação de transações ----------
+    // Conversor de string numérica (suporta "1234.56" e "1.234,56")
+    function toNumberBR(x) {
+      if (typeof x === 'number') return x;
+      if (typeof x !== 'string') return NaN;
+      const s = x.trim();
+      // Se tem vírgula e ponto, assume formato BR "1.234,56"
+      if (s.includes(',') && s.includes('.')) {
+        // remove separador de milhar "." e troca vírgula por ponto
+        return Number(s.replace(/\./g, '').replace(',', '.'));
+      }
+      // Se tem só vírgula, troca por ponto
+      if (s.includes(',') && !s.includes('.')) {
+        return Number(s.replace(',', '.'));
+      }
+      // Caso padrão (já com ponto decimal)
+      return Number(s);
+    }
+
+    // Pega o valor de uma tx nas chaves comuns
+    function getTxValue(tx) {
+      if (tx == null || typeof tx !== 'object') return NaN;
+      const raw = tx.valor ?? tx.value ?? tx.amount;
+      return toNumberBR(raw);
+    }
+
+    // Ordena desc pelo valor
+    function sortTransactionsDesc(txs) {
+      return [...txs].sort((a, b) => {
+        const va = getTxValue(a);
+        const vb = getTxValue(b);
+        // NaN vai para o fim
+        if (isNaN(va) && isNaN(vb)) return 0;
+        if (isNaN(va)) return 1;
+        if (isNaN(vb)) return -1;
+        return vb - va;
+      });
+    }
+
+    // Tabela
+    function renderTable(txs) {
+      const wrap = document.getElementById('tableWrap');
+      if (!txs?.length) {
+        wrap.innerHTML = '<p class="muted">Nenhuma transação para exibir.</p>';
+        return;
+      }
+      const rows = txs.map(tx => {
+        const v = getTxValue(tx);
+        const display = isNaN(v) ? '<span class="err">inválido</span>' :
+          new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+        return `<tr>
+          <td>${tx.id ?? '-'}</td>
+          <td><code>${(tx.from ?? '').toString().slice(0, 10)}…</code></td>
+          <td><code>${(tx.to ?? '').toString().slice(0, 10)}…</code></td>
+          <td style="text-align:right">${display}</td>
+        </tr>`;
+      }).join('');
+      wrap.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>De</th>
+              <th>Para</th>
+              <th style="text-align:right">Valor</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    // UI de ordenação
+    const txArea = document.getElementById('txjson');
+    document.getElementById('btnSort').addEventListener('click', () => {
+      try {
+        const txs = JSON.parse(txArea.value);
+        if (!Array.isArray(txs)) throw new Error('O conteúdo precisa ser um array de transações.');
+        const sorted = sortTransactionsDesc(txs);
+        renderTable(sorted);
+      } catch (e) {
+        alert('JSON inválido: ' + e.message);
+      }
+    });
+
+    document.getElementById('btnClear').addEventListener('click', () => {
+      document.getElementById('tableWrap').innerHTML = '';
+    });
+
+    // Render inicial (com exemplo)
+    (function init() {
+      try {
+        const example = JSON.parse(txArea.value);
+        renderTable(sortTransactionsDesc(example));
+      } catch {}
+    })();
+  </script>
+</body>
+</html>
